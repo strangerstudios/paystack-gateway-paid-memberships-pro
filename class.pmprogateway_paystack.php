@@ -243,75 +243,89 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                  * Webhook handler for Paystack.
                  * @since 1.0 (Renamed in 1.7.1)
                  */
-                static function pmpro_paystack_ipn() {
-                    global $wpdb;
-                    
-                    // Let's make sure the request came from Paystack by checking the secret key
-                    if ( ( strtoupper( $_SERVER['REQUEST_METHOD'] ) != 'POST' ) || ! array_key_exists( 'HTTP_X_PAYSTACK_SIGNATURE', $_SERVER ) ) {
-                        exit;
-                    }
+                static function pmpro_paystack_ipn()
+                {
+                    try {
+                        global $wpdb;
 
-                    // Get the relevant secret key based on gateway environment.
-                    $mode = pmpro_getOption("gateway_environment");
-                    if ($mode == 'sandbox') {
-                        $secret_key = pmpro_getOption("paystack_tsk");
-                    } else {
-                        $secret_key = pmpro_getOption("paystack_lsk");
-                    }
-                    
-
-                    $input = @file_get_contents("php://input");
-
-                    // The Paystack signature doesn't match the secret key, let's bail.
-                    if ( $_SERVER['HTTP_X_PAYSTACK_SIGNATURE'] !== hash_hmac('sha512', $input, $secret_key ) ) {
-                        exit;
-                    }
-
-                    $event = json_decode($input);
-
-                    switch( $event->event ){
-                    case 'subscription.create':
-
-                        break;
-                    case 'subscription.disable':
-                        $amount = $event->data->subscription->amount/100;
-                        $morder = new MemberOrder();
-                        $subscription_code = $event->data->subscription_code;
-                        $email = $event->data->customer->email;
-                        $morder->Email = $email;
-                        $users_row = $wpdb->get_row( "SELECT ID, display_name FROM $wpdb->users WHERE user_email = '" . esc_sql( $email ). "' LIMIT 1" );
-                        if ( ! empty( $users_row )  ) {
-                            $user_id = $users_row->ID;
-                            $user = get_userdata($user_id);
-                            $user->membership_level = pmpro_getMembershipLevelForUser($user_id);
+                        // Let's make sure the request came from Paystack by checking the secret key
+                        if ((strtoupper($_SERVER['REQUEST_METHOD']) != 'POST') || !array_key_exists('HTTP_X_PAYSTACK_SIGNATURE', $_SERVER)) {
+                            exit;
                         }
-                        if ( empty( $user ) ) {
-                            print_r('Could not get user');
-                            exit();
-                        }
-                        self::cancelMembership($user);
-                        break;
-                    case 'charge.success':
-                        $morder =  new MemberOrder($event->data->reference);
-                        $morder->getMembershipLevel();
-                        $morder->getUser();
-                        $morder->Gateway->pmpro_pages_shortcode_confirmation('', $event->data->reference);
+
+                        // Get the relevant secret key based on gateway environment.
                         $mode = pmpro_getOption("gateway_environment");
                         if ($mode == 'sandbox') {
-                            $pk = pmpro_getOption("paystack_tpk");
+                            $secret_key = pmpro_getOption("paystack_tsk");
                         } else {
-                            $pk = pmpro_getOption("paystack_lpk");
+                            $secret_key = pmpro_getOption("paystack_lsk");
                         }
-                        $pstk_logger = new pmpro_paystack_plugin_tracker('pm-pro',$pk);
-                        $pstk_logger->log_transaction_success($event->data->reference);
-                        break;
-                    case 'invoice.create':
-                        self::renewpayment($event);
-                    case 'invoice.update':
-                        self::renewpayment($event);
+
+
+                        $input = @file_get_contents("php://input");
+
+                        // The Paystack signature doesn't match the secret key, let's bail.
+                        if ($_SERVER['HTTP_X_PAYSTACK_SIGNATURE'] !== hash_hmac('sha512', $input, $secret_key)) {
+                            echo "Unauthorized: Invalid Paystack signature";
+                            http_response_code(401);
+                            exit();
+                        }
+
+                        $event = json_decode($input);
+
+                        switch ($event->event) {
+                            case 'subscription.create':
+                                break;
+                            case 'subscription.disable':
+                                $amount = $event->data->subscription->amount / 100;
+                                $morder = new MemberOrder();
+                                $subscription_code = $event->data->subscription_code;
+                                $email = $event->data->customer->email;
+                                $morder->Email = $email;
+                                $users_row = $wpdb->get_row("SELECT ID, display_name FROM $wpdb->users WHERE user_email = '" . esc_sql($email) . "' LIMIT 1");
+                                if (!empty ($users_row)) {
+                                    $user_id = $users_row->ID;
+                                    $user = get_userdata($user_id);
+                                    $user->membership_level = pmpro_getMembershipLevelForUser($user_id);
+                                }
+                                if (empty ($user)) {
+                                    print_r('Could not get user');
+                                    exit();
+                                }
+                                self::cancelMembership($user);
+                                break;
+                            case 'charge.success':
+                                $morder = new MemberOrder($event->data->reference);
+                                $morder->getMembershipLevel();
+                                $morder->getUser();
+                                $txnstatus = $morder->Gateway->pmpro_pages_shortcode_confirmation('', $event->data->reference);
+                                $mode = pmpro_getOption("gateway_environment");
+                                if ($mode == 'sandbox') {
+                                    $pk = pmpro_getOption("paystack_tpk");
+                                } else {
+                                    $pk = pmpro_getOption("paystack_lpk");
+                                }
+                                $pstk_logger = new pmpro_paystack_plugin_tracker('pm-pro', $pk);
+                                $pstk_logger->log_transaction_success($event->data->reference);
+                                if ($txnstatus['member'] === 'success') {
+                                    http_response_code(200);
+                                    exit();
+                                }
+                                break;
+                            case 'invoice.create':
+                                self::renewpayment($event);
+                            case 'invoice.update':
+                                self::renewpayment($event);
+                        }
+                        http_response_code(200);
+                        exit();
                     }
-                    http_response_code(200);
-                    exit();
+                    //catch exception
+                    catch (Exception $e) {
+                        echo 'Error: ' . $e->getMessage();
+                        http_response_code(500);
+                        exit();
+                    }
                 }
 
                 /**
