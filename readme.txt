@@ -1,7 +1,7 @@
 === Paystack Gateway for Paid Membership Pro ===
 Contributors: paystack, kendysond, steveamaza, lukman008, andrewza, strangerstudios, paidmembershipspro
 Donate link: https://paystack.com/demo
-Tags: paid memberships pro, pmpro, paystack, gateway, credit card, Naira, payment
+Tags: paid memberships pro, paystack, gateway, credit card, Naira
 Requires at least: 5.2
 Tested up to: 6.5
 Stable tag: 1.7.2
