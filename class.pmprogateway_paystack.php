@@ -865,11 +865,12 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                                         $request = wp_remote_post($subscription_url, $args);
                                         if (!is_wp_error($request)) {
                                             $paystack_response = json_decode(wp_remote_retrieve_body($request));
-                                            if ( isset( $paystack_response->data->status ) && 'success' == $paystack_response->data->status ) {
+                                            if ( isset( $paystack_response->data->status ) && 'active' == $paystack_response->data->status ) {
                                                 $subscription_code = $paystack_response->data->subscription_code;
                                                 $token = $paystack_response->data->email_token;
                                                 $morder->subscription_transaction_id = $subscription_code;
                                                 $morder->subscription_token = $token;
+                                                $morder->saveOrder();
                                             }
                                         }
                                     }
