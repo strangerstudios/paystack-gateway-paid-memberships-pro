@@ -1070,7 +1070,10 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                     return true;
                 }
 
-                /// Used for updating subscription stuff.
+                /**
+                 * Allow "Sync" with gateway for subscriptions.
+                 * @since 1.7.2
+                 */
                 public function update_subscription_info( $subscription ) {
                         $subscription_id = $subscription->get_subscription_transaction_id();
                         $backtrace = self::get_caller_info();
@@ -1138,7 +1141,10 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                         }
                 }
 
-                // Process the refund /// CHANGE THIS.
+                /**
+                 * Allow refunds from within Paid Memberships Pro and Paystack.
+                 * @since TBD
+                 */
                 public static function process_refund( $success, $order ) {
                     global $current_user;
 
