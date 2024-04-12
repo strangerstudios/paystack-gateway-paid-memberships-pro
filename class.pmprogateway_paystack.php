@@ -81,6 +81,12 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                         // custom confirmation page
 
                         add_filter('pmpro_pages_shortcode_confirmation', array('PMProGateway_Paystack', 'pmpro_pages_shortcode_confirmation'), 20, 1);
+
+                        // Refund functionality.
+                        add_filter( 'pmpro_allowed_refunds_gateways', array( 'PMProGateway_Paystack', 'pmpro_allowed_refunds_gateways' ) );
+                        add_filter( 'pmpro_process_refund_paystack', array( 'PMProGateway_Paystack', 'process_refund' ), 10, 2 );
+
+
                     }
                 }
 
@@ -136,6 +142,17 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                     }
                     return $gateways;
                 }
+
+                /** 
+                 * Enable refund functionality for paystack.
+                 * @since TBD.
+                 */
+                static function pmpro_allowed_refunds_gateways( $gateways ) {
+                    $gateways[] = 'paystack';
+                    return $gateways;
+                }
+
+
                 function kkd_pmprosd_convert_date( $date ) {
                     // handle lower-cased y/m values.
                     $set_date = strtoupper($date);
@@ -1118,6 +1135,87 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                         } else {
                             return esc_html__( 'There was an error communicating with Paystack. Please confirm your connectivity and API details and try again.', 'paystack-gateway-paid-memberships-pro' );
                         }
+                }
+
+                // Process the refund /// CHANGE THIS.
+                public static function process_refund( $success, $order ) {
+                    global $current_user;
+
+                    //default to using the payment id from the order
+                    if ( !empty( $order->payment_transaction_id ) ) {
+                        $transaction_id = $order->payment_transaction_id;
+                    }
+
+                    //need a transaction id
+                    if ( empty( $transaction_id ) ) {
+                        return false;
+                    }
+
+                    // OKAY do the refund now.
+                    // Make the API call to PayStack to refund the order.
+                     $mode = pmpro_getOption("gateway_environment");
+                        if ( $mode == "sandbox" ) {
+                            $key = pmpro_getOption("paystack_tsk");
+                            
+                        } else {
+                            $key = pmpro_getOption("paystack_lsk");
+                        }
+
+                        $paystack_url = 'https://api.paystack.co/refund/';
+                       
+                        $headers = array(
+                            'Authorization' => 'Bearer ' . $key,
+                            'Cache-Control' => 'no-cache'
+                        );
+
+                        // The transaction ID for the refund.
+                        $fields = array(
+                            'transaction' => $transaction_id
+                        );
+
+                        $args = array(
+                            'headers' => $headers,
+                            'timeout' => 60,
+                            'body' => $fields
+                        );
+
+                        
+                        $success = false;
+
+                        // Try to make the API call now.
+                        $request = wp_remote_post( $paystack_url, $args );
+
+                        if ( ! is_wp_error( $request ) ) {
+
+                            $response = json_decode( wp_remote_retrieve_body( $request ) );
+
+                            // If not successful throw an error.
+                            if ( ! $response->status ) {
+                                $order->notes = trim( $order->notes.' '.sprintf( __('Admin: Order refund failed on %1$s for transaction ID %2$s by %3$s. Order may have already been refunded.', 'paid-memberships-pro' ), date_i18n('Y-m-d H:i:s'), $transaction_id, $current_user->display_name ) );
+                                $order->saveOrder();
+                            } else {
+                            // Set the order status to refunded and save it and return true
+                            $order->status = 'refunded';
+                            
+                            $success = true;
+
+                            $order->notes = trim( $order->notes.' '.sprintf( __('Admin: Order successfully refunded on %1$s for transaction ID %2$s by %3$s.', 'paid-memberships-pro' ), date_i18n('Y-m-d H:i:s'), $transaction_id, $current_user->display_name ) );	
+
+                            $user = get_user_by( 'id', $order->user_id );
+                            //send an email to the member
+                            $myemail = new PMProEmail();
+                            $myemail->sendRefundedEmail( $user, $order );
+
+                            //send an email to the admin
+                            $myemail = new PMProEmail();
+                            $myemail->sendRefundedAdminEmail( $user, $order );
+
+                            $order->saveOrder();
+                            }                            
+                        }
+
+                        return $success;
+                    
                 }
 
                 /**
