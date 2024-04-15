@@ -4,7 +4,7 @@ Donate link: https://paystack.com/demo
 Tags: paid memberships pro, paystack, gateway, credit card, Naira
 Requires at least: 5.2
 Tested up to: 6.5
-Stable tag: 1.7.2
+Stable tag: 1.7.3
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -66,13 +66,18 @@ If you get stuck, you can ask for help in the [Paystack Gateway for Paid Members
  
 = Paystack Gateway for Paid Membership Pro is awesome! Can I contribute? =
 
-Yes you can! Join in on our [GitHub repository](https://github.com/strangerstudios/paystack-gateway-paid-memberships-pro) :)
+Yes you can! Join in on our [GitHub repository](https://github.com/strangerstudios/paystack-gateway-paid-memberships-pro)
  
 == Screenshots ==
  
 1. The slick Paystack settings panel.
 
 == Changelog ==
+= 1.7.3 - 2024-04-15 =
+* SECURITY: Improved sanitization to output of translatable strings.
+* ENHANCEMENT: Added functionality for refunds within Paid Memberships Pro. Supports full refunds only.
+* BUG FIX: Fixed an issue where subscriptions weren't being linked inside Paid Memberships Pro correctly when confirming the membership.
+
 = 1.7.2 - 2024-02-15 =
 * ENHANCEMENT: Added support for Paid Memberships Pro 3.0+ subscriptions.
 * BUG FIX: Fixed an issue where discount codes were not reflecting on Paid Memberships Pro side.
