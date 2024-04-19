@@ -750,6 +750,9 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                             $pmpro_level = apply_filters("pmpro_checkout_level", $pmpro_level);
                             $startdate = apply_filters("pmpro_checkout_start_date", "'" . current_time("mysql") . "'", $morder->user_id, $pmpro_level);
 
+                            // The level object from the order that can be filtered when returning from Paystack and user is getting their membership level.
+                            $morder->membership_level = apply_filters( 'pmpro_paystack_webhook_level', $morder->membership_level, $morder->user_id );
+
                             $mode = pmpro_getOption("gateway_environment");
                             if ($mode == "sandbox") {
                                 $key = pmpro_getOption("paystack_tsk");
