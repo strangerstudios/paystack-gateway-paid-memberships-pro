@@ -73,6 +73,9 @@ Yes you can! Join in on our [GitHub repository](https://github.com/strangerstudi
 1. The slick Paystack settings panel.
 
 == Changelog ==
+= 1.7.4 - 2024-04-24 =
+* ENHANCEMENT: Added new filter `pmpro_paystack_webhook_level` to tweak the level given to members after checkout. This includes support for the Set Expiration Dates Add On.
+
 = 1.7.3 - 2024-04-15 =
 * SECURITY: Improved sanitization to output of translatable strings.
 * ENHANCEMENT: Added functionality for refunds within Paid Memberships Pro. Supports full refunds only.
