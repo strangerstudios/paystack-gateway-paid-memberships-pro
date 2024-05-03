@@ -70,6 +70,9 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                     //code to add at checkout
                     $gateway = pmpro_getGateway();
                     if ($gateway == "paystack") {
+                        // Add support for custom fields.
+                        add_action( 'pmpro_before_send_to_paystack', 'pmpro_after_checkout_save_fields', 20, 2 );
+
                         add_filter('pmpro_include_billing_address_fields', '__return_false');
                         add_filter('pmpro_required_billing_fields', array('PMProGateway_Paystack', 'pmpro_required_billing_fields'));
                         add_filter('pmpro_include_payment_information_fields', '__return_false');
