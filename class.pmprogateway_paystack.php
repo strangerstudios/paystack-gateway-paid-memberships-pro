@@ -10,9 +10,10 @@
  * Text Domain: paystack-gateway-paid-memberships-pro
  * Domain Path: /languages
  */
-
 include_once plugin_dir_path(__FILE__) . 'class-paystack-plugin-tracker.php';
+
 defined('ABSPATH') or die('No script kiddies please!');
+
 if (!function_exists('Paystack_Pmp_Gateway_load')) {
     add_action('plugins_loaded', 'Paystack_Pmp_Gateway_load', 20);
 
@@ -268,8 +269,12 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                     
                     // Let's make sure the request came from Paystack by checking the secret key
                     if ( ( strtoupper( $_SERVER['REQUEST_METHOD'] ) != 'POST' ) || ! array_key_exists( 'HTTP_X_PAYSTACK_SIGNATURE', $_SERVER ) ) {
-                        exit;
+                        pmpro_paystack_ipn_log( 'Paystack signature not found' );
+                        pmpro_paystack_ipn_exit();
                     }
+
+                    // Log all the $_POST data to the IPN log.
+                    pmpro_paystack_ipn_log( print_r( $_POST, true ) );
 
                     // Get the relevant secret key based on gateway environment.
                     $mode = pmpro_getOption("gateway_environment");
@@ -284,10 +289,12 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
 
                     // The Paystack signature doesn't match the secret key, let's bail.
                     if ( $_SERVER['HTTP_X_PAYSTACK_SIGNATURE'] !== hash_hmac('sha512', $input, $secret_key ) ) {
-                        exit;
+                        pmpro_paystack_ipn_log( 'Paystack signature does not match.' );
+                        pmpro_paystack_ipn_exit();
                     }
 
-                    $event = json_decode($input);
+                    $event = json_decode( $input );
+                    pmpro_paystack_ipn_log( 'Event: ' . print_r( $event, true ) );
 
                     switch( $event->event ){
                     case 'subscription.create':
@@ -305,9 +312,10 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                             $user = get_userdata($user_id);
                             $user->membership_level = pmpro_getMembershipLevelForUser($user_id);
                         }
+                        
                         if ( empty( $user ) ) {
-                            print_r('Could not get user');
-                            exit();
+                            pmpro_paystack_ipn_log( 'Could not get user' );
+                            pmpro_paystack_ipn_exit();
                         }
                         self::cancelMembership($user);
                         break;
@@ -324,6 +332,7 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                         }
                         $pstk_logger = new pmpro_paystack_plugin_tracker('pm-pro',$pk);
                         $pstk_logger->log_transaction_success($event->data->reference);
+                        pmpro_paystack_ipn_log( 'Charge success. Reference: ' . $event->data->reference );
                         break;
                     case 'invoice.create':
                         self::renewpayment($event);
@@ -331,7 +340,7 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                         self::renewpayment($event);
                     }
                     http_response_code(200);
-                    exit();
+                    pmpro_paystack_ipn_exit();
                 }
 
                 /**
@@ -638,14 +647,16 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                         $old_order->getLastMemberOrderBySubscriptionTransactionID($subscription_code);
 
                         if (empty($old_order)) {
-                            exit();
+                            pmpro_paystack_ipn_log( 'Could not find last order for subscription code: ' . $subscription_code );
+                            pmpro_paystack_ipn_exit();
                         }
                         $user_id = $old_order->user_id;
                         $user = get_userdata($user_id);
                         $user->membership_level = pmpro_getMembershipLevelForUser($user_id);
 
                         if (empty($user)) {
-                            exit();
+                            pmpro_paystack_ipn_log( 'Could not get user for renewal payment' );
+                            pmpro_paystack_ipn_exit();
                         }
 
                         $morder = new MemberOrder();
@@ -703,6 +714,13 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                         $morder->ExpirationDate_YdashM = $morder->expirationyear . "-" . $morder->expirationmonth;
 
 
+                        // Save entire order data to IPN Log - loop through the order object.
+                        $order_data = array();
+                        foreach ( $morder as $key => $value ) {
+                            $order_data[ $key ] = $value;
+                        }
+                        pmpro_paystack_ipn_log( 'Order data: ' . print_r( $order_data, true ) );
+                        
                         //save
                         if ($morder->status != 'success') {
 
@@ -721,7 +739,8 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                         $pmproemail->sendInvoiceEmail($user, $morder);
 
                         do_action('pmpro_subscription_payment_completed', $morder);
-                        exit();
+                        pmpro_paystack_ipn_log( sprintf( 'Subscription payment completed for user with ID: %d. Order ID: %s' ), $user_id, $morder->code );
+                        pmpro_paystack_ipn_exit();
                     }
 
                 }
@@ -985,8 +1004,7 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
 
                 }
 
-                function cancelMembership(&$user){
-//                  
+                function cancelMembership(&$user){                
                     if (empty($user)) {
                         print_r("Empty user object");
                         exit();
@@ -1333,4 +1351,72 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
             }
         }
     }
+}
+
+/**
+ * Create the log string for debugging purposes.
+ *
+ * @param string $s The error/information you want to log to the IPN log.
+ * @return string $logstr A formatted message for the logfile.
+ * 
+ * @since TBD
+ */
+function pmpro_paystack_ipn_log( $s ) {
+    global $logstr;
+	$logstr .= "\t" . $s . "\n";
+}
+
+/**
+ * Write to the log file and exit.
+ *
+ * @since TBD
+ */
+function pmpro_paystack_ipn_exit() {
+    global $logstr;
+
+	//for log
+	if ( $logstr ) {
+		$logstr = "Logged On: " . date_i18n( "m/d/Y H:i:s" ) . "\n" . $logstr . "\n-------------\n";
+
+		echo esc_html( $logstr );
+
+		//log or dont log? log in file or email?
+		//- dont log if constant is undefined or defined but false
+		//- log to file if constant is set to TRUE or 'log'
+		//- log to file if constant is defined to a valid email address
+		if ( defined( 'PMPRO_PAYSTACK_IPN_DEBUG' ) ) {
+			if( PMPRO_PAYSTACK_IPN_DEBUG === false ){
+				//dont log here. false mean no.
+				//should avoid counterintuitive interpretation of false.
+			} elseif ( PMPRO_PAYSTACK_IPN_DEBUG === "log" ) {
+				//file
+				$logfile = apply_filters( 'pmpro_paystack_ipn_logfile', dirname( __FILE__ ) . "/logs/ipn.txt" );
+
+                // Check if the dir exists, if not let's create it.
+                $logdir = dirname( $logfile );
+                if ( ! file_exists( $logdir ) ) {
+                    mkdir( $logdir, 0775 );
+                }
+
+                // If the log file doesn't exist let's create it.
+                if ( ! file_exists( $logfile ) ) {
+                    // Create a blank logfile
+                    file_put_contents( $logfile, "" );
+                }
+
+				$loghandle = fopen( $logfile, "a+" );
+				fwrite( $loghandle, $logstr );
+				fclose( $loghandle );
+			} elseif ( is_email( PMPRO_PAYSTACK_IPN_DEBUG ) ) {
+				//email to specified address
+				wp_mail( PMPRO_PAYSTACK_IPN_DEBUG, get_option( "blogname" ) . " IPN Log", nl2br( esc_html( $logstr ) ) );							
+			} else {
+				//email to admin
+				wp_mail( get_option( "admin_email" ), get_option( "blogname" ) . " IPN Log", nl2br( esc_html( $logstr ) ) );							
+			}
+		}
+	}
+
+	exit;
+
 }
