@@ -269,12 +269,12 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                     
                     // Let's make sure the request came from Paystack by checking the secret key
                     if ( ( strtoupper( $_SERVER['REQUEST_METHOD'] ) != 'POST' ) || ! array_key_exists( 'HTTP_X_PAYSTACK_SIGNATURE', $_SERVER ) ) {
-                        pmpro_paystack_ipn_log( 'Paystack signature not found' );
-                        pmpro_paystack_ipn_exit();
+                        pmpro_paystack_webhook_log( 'Paystack signature not found' );
+                        pmpro_paystack_webhook_exit();
                     }
 
                     // Log all the $_POST data to the IPN log.
-                    pmpro_paystack_ipn_log( print_r( $_POST, true ) );
+                    pmpro_paystack_webhook_log( print_r( $_POST, true ) );
 
                     // Get the relevant secret key based on gateway environment.
                     $mode = pmpro_getOption("gateway_environment");
@@ -289,12 +289,12 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
 
                     // The Paystack signature doesn't match the secret key, let's bail.
                     if ( $_SERVER['HTTP_X_PAYSTACK_SIGNATURE'] !== hash_hmac('sha512', $input, $secret_key ) ) {
-                        pmpro_paystack_ipn_log( 'Paystack signature does not match.' );
-                        pmpro_paystack_ipn_exit();
+                        pmpro_paystack_webhook_log( 'Paystack signature does not match.' );
+                        pmpro_paystack_webhook_exit();
                     }
 
                     $event = json_decode( $input );
-                    pmpro_paystack_ipn_log( 'Event: ' . print_r( $event, true ) );
+                    pmpro_paystack_webhook_log( 'Event: ' . print_r( $event, true ) );
 
                     switch( $event->event ){
                     case 'subscription.create':
@@ -314,8 +314,8 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                         }
                         
                         if ( empty( $user ) ) {
-                            pmpro_paystack_ipn_log( 'Could not get user' );
-                            pmpro_paystack_ipn_exit();
+                            pmpro_paystack_webhook_log( 'Could not get user' );
+                            pmpro_paystack_webhook_exit();
                         }
                         self::cancelMembership($user);
                         break;
@@ -332,7 +332,7 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                         }
                         $pstk_logger = new pmpro_paystack_plugin_tracker('pm-pro',$pk);
                         $pstk_logger->log_transaction_success($event->data->reference);
-                        pmpro_paystack_ipn_log( 'Charge success. Reference: ' . $event->data->reference );
+                        pmpro_paystack_webhook_log( 'Charge success. Reference: ' . $event->data->reference );
                         break;
                     case 'invoice.create':
                         self::renewpayment($event);
@@ -342,7 +342,7 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                         break;
                     }
                     http_response_code(200);
-                    pmpro_paystack_ipn_exit();
+                    pmpro_paystack_webhook_exit();
                 }
 
                 /**
@@ -639,16 +639,16 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
 
                        
                         if (empty($old_order)) {
-                            pmpro_paystack_ipn_log( 'Could not find last order for subscription code: ' . $subscription_code );
-                            pmpro_paystack_ipn_exit();
+                            pmpro_paystack_webhook_log( 'Could not find last order for subscription code: ' . $subscription_code );
+                            pmpro_paystack_webhook_exit();
                         }
                         $user_id = $old_order->user_id;
                         $user = get_userdata($user_id);
                         $user->membership_level = pmpro_getMembershipLevelForUser($user_id);
 
                         if (empty($user)) {
-                            pmpro_paystack_ipn_log( 'Could not get user for renewal payment' );
-                            pmpro_paystack_ipn_exit();
+                            pmpro_paystack_webhook_log( 'Could not get user for renewal payment' );
+                            pmpro_paystack_webhook_exit();
                         }
 
                         $morder = new MemberOrder();
@@ -718,7 +718,7 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                         foreach ( $morder as $key => $value ) {
                             $order_data[ $key ] = $value;
                         }
-                        pmpro_paystack_ipn_log( 'Order data: ' . print_r( $order_data, true ) );
+                        pmpro_paystack_webhook_log( 'Order data: ' . print_r( $order_data, true ) );
                         
                         
                         //save
@@ -741,8 +741,8 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                         $pmproemail->sendInvoiceEmail($user, $morder);
 
                         do_action('pmpro_subscription_payment_completed', $morder);
-                        pmpro_paystack_ipn_log( sprintf( 'Subscription payment completed for user with ID: %d. Order ID: %s', $user_id, $morder->code ) );
-                        pmpro_paystack_ipn_exit();
+                        pmpro_paystack_webhook_log( sprintf( 'Subscription payment completed for user with ID: %d. Order ID: %s', $user_id, $morder->code ) );
+                        pmpro_paystack_webhook_exit();
                     }
 
                 }
@@ -1363,7 +1363,7 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
  * 
  * @since TBD
  */
-function pmpro_paystack_ipn_log( $s ) {
+function pmpro_paystack_webhook_log( $s ) {
     global $logstr;
 	$logstr .= "\t" . $s . "\n";
 }
@@ -1373,7 +1373,7 @@ function pmpro_paystack_ipn_log( $s ) {
  *
  * @since TBD
  */
-function pmpro_paystack_ipn_exit() {
+function pmpro_paystack_webhook_exit() {
     global $logstr;
 
 	//for log
@@ -1386,13 +1386,13 @@ function pmpro_paystack_ipn_exit() {
 		//- dont log if constant is undefined or defined but false
 		//- log to file if constant is set to TRUE or 'log'
 		//- log to file if constant is defined to a valid email address
-		if ( defined( 'PMPRO_PAYSTACK_IPN_DEBUG' ) ) {
-			if( PMPRO_PAYSTACK_IPN_DEBUG === false ){
+		if ( defined( 'PMPRO_PAYSTACK_WEBHOOK_DEBUG' ) ) {
+			if( PMPRO_PAYSTACK_WEBHOOK_DEBUG === false ){
 				//dont log here. false mean no.
 				//should avoid counterintuitive interpretation of false.
-			} elseif ( PMPRO_PAYSTACK_IPN_DEBUG === "log" ) {
+			} elseif ( PMPRO_PAYSTACK_WEBHOOK_DEBUG === "log" ) {
 				//file
-				$logfile = apply_filters( 'pmpro_paystack_ipn_logfile', dirname( __FILE__ ) . "/logs/ipn.txt" );
+				$logfile = apply_filters( 'pmpro_paystack_webhook_log_file', dirname( __FILE__ ) . "/logs/ipn.txt" );
 
                 // Check if the dir exists, if not let's create it.
                 $logdir = dirname( $logfile );
@@ -1409,9 +1409,9 @@ function pmpro_paystack_ipn_exit() {
 				$loghandle = fopen( $logfile, "a+" );
 				fwrite( $loghandle, $logstr );
 				fclose( $loghandle );
-			} elseif ( is_email( PMPRO_PAYSTACK_IPN_DEBUG ) ) {
+			} elseif ( is_email( PMPRO_PAYSTACK_WEBHOOK_DEBUG ) ) {
 				//email to specified address
-				wp_mail( PMPRO_PAYSTACK_IPN_DEBUG, get_option( "blogname" ) . " IPN Log", nl2br( esc_html( $logstr ) ) );							
+				wp_mail( PMPRO_PAYSTACK_WEBHOOK_DEBUG, get_option( "blogname" ) . " IPN Log", nl2br( esc_html( $logstr ) ) );							
 			} else {
 				//email to admin
 				wp_mail( get_option( "admin_email" ), get_option( "blogname" ) . " IPN Log", nl2br( esc_html( $logstr ) ) );							
