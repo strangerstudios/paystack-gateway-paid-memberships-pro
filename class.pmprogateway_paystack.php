@@ -336,8 +336,10 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                         break;
                     case 'invoice.create':
                         self::renewpayment($event);
+                        break;
                     case 'invoice.update':
                         self::renewpayment($event);
+                        break;
                     }
                     http_response_code(200);
                     pmpro_paystack_ipn_exit();
@@ -565,20 +567,9 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                     if ($key  == '') {
                         echo "Api keys not set";
                     }
-                    // $txn_code = $txn.'_'.$order_id;
 
                     $koboamount = $amount*100;
-                    // $mcurrency =     
 
-                    // foreach($level_currencies as $level_currency_id => $level_currency)
-                    // {
-                    // if($level_id == $level_currency_id)
-                    // {
-                    // $pmpro_currency = $level_currency[0];
-                    // $pmpro_currency_symbol = $level_currency[1];
-
-                    // }
-                    // }
 
                     $paystack_url = 'https://api.paystack.co/transaction/initialize';
                     $headers = array(
@@ -646,6 +637,7 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                         $email = $event->data->customer->email;
                         $old_order->getLastMemberOrderBySubscriptionTransactionID($subscription_code);
 
+                       
                         if (empty($old_order)) {
                             pmpro_paystack_ipn_log( 'Could not find last order for subscription code: ' . $subscription_code );
                             pmpro_paystack_ipn_exit();
@@ -660,6 +652,12 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                         }
 
                         $morder = new MemberOrder();
+                        
+                        // Set the orders date to time it was paid.
+                        if ( ! empty( $event->data->paid_at ) ) {
+                            $morder->timestamp = strtotime( sanitize_text_field( $event->data->paid_at ) );
+                        }
+
                         $morder->user_id = $old_order->user_id;
                         $morder->membership_id = $old_order->membership_id;
                         $morder->InitialPayment = $amount;  //not the initial payment, but the order class is expecting this
@@ -685,6 +683,7 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                             $discount_code_id = '';
                         }
 
+                        
                         //fix expiration date
                         if ( ! empty( $morder->membership_level->expiration_number ) ) {
                             $enddate = "'" . date_i18n( "Y-m-d", strtotime( "+ " . $morder->membership_level->expiration_number . " " . $morder->membership_level->expiration_period, current_time( "timestamp" ) ) ) . "'";
@@ -721,25 +720,28 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                         }
                         pmpro_paystack_ipn_log( 'Order data: ' . print_r( $order_data, true ) );
                         
+                        
                         //save
                         if ($morder->status != 'success') {
 
                             $_REQUEST['cancel_membership'] = false; // Do NOT cancel gateway subscription
 
-                            if (pmpro_changeMembershipLevel($custom_level, $morder->user_id, 'changed')) {
+                            if ( pmpro_changeMembershipLevel( $custom_level, $morder->user_id, 'changed' ) !== false  ) {
                                 $morder->status = "success";
-                                $morder->saveOrder();
                             }
 
                         }
-                        $morder->getMemberOrderByID($morder->id);
+
+                        // Save the order before emailing the customer about it.
+                        $morder->saveOrder();
+                        $morder->getMemberOrderByID( $morder->id );
 
                         //email the user their invoice
                         $pmproemail = new PMProEmail();
                         $pmproemail->sendInvoiceEmail($user, $morder);
 
                         do_action('pmpro_subscription_payment_completed', $morder);
-                        pmpro_paystack_ipn_log( sprintf( 'Subscription payment completed for user with ID: %d. Order ID: %s' ), $user_id, $morder->code );
+                        pmpro_paystack_ipn_log( sprintf( 'Subscription payment completed for user with ID: %d. Order ID: %s', $user_id, $morder->code ) );
                         pmpro_paystack_ipn_exit();
                     }
 
