@@ -4,7 +4,7 @@ Donate link: https://paystack.com/demo
 Tags: paid memberships pro, paystack, gateway, credit card, Naira
 Requires at least: 5.2
 Tested up to: 6.5
-Stable tag: 1.7.4
+Stable tag: 1.7.6
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -73,9 +73,10 @@ Yes you can! Join in on our [GitHub repository](https://github.com/strangerstudi
 1. The slick Paystack settings panel.
 
 == Changelog ==
-= 1.7.5 - 2024-07-03 =
+= 1.7.6 - 2024-07-03 =
 * ENHANCEMENT: Added webhook logging functionality to debug incoming webhook data. You may use the constant 'PMPRO_PAYSTACK_WEBHOOK_LOG' to enable this feature. Please delete logs and disable this constant after completing debugging.
 * BUG FIX: Fixed an issue where the webhook handler was not correctly storing the order amount if the subscription amount changed.
+* BUG FIX: Fixed an issue when renewal payments were being processed and failing to complete the order.
 
 = 1.7.4 - 2024-04-24 =
 * ENHANCEMENT: Added new filter `pmpro_paystack_webhook_level` to tweak the level given to members after checkout. This includes support for the Set Expiration Dates Add On.

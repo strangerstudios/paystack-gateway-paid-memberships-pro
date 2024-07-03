@@ -3,7 +3,7 @@
  * Plugin Name: Paystack Gateway for Paid Memberships Pro
  * Plugin URI: https://www.paidmembershipspro.com/add-ons/paystack-gateway/
  * Description: Plugin to add Paystack payment gateway into Paid Memberships Pro
- * Version: 1.7.5
+ * Version: 1.7.6
  * Author: Paid Memberships Pro, Paystack
  * Author URI: https://www.paidmembershipspro.com
  * License: GPLv2 or later
@@ -644,7 +644,6 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                         }
                         $user_id = $old_order->user_id;
                         $user = get_userdata($user_id);
-                        $user->membership_level = pmpro_getMembershipLevelForUser($user_id);
 
                         if (empty($user)) {
                             pmpro_paystack_webhook_log( 'Could not get user for renewal payment' );
