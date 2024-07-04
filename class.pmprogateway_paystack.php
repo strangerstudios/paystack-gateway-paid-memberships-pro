@@ -1005,7 +1005,7 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
 
                 }
 
-                function cancelMembership(&$user){                
+                static function cancelMembership(&$user){                
                     if (empty($user)) {
                         print_r("Empty user object");
                         exit();
