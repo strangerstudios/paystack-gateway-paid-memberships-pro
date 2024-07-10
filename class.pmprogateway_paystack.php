@@ -374,7 +374,6 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                         'paystack_tpk',
                         'paystack_lsk',
                         'paystack_lpk',
-                        'gateway_environment',
                         'currency',
                         'tax_state',
                         'tax_rate'
