@@ -76,7 +76,7 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
 
                         add_filter('pmpro_include_billing_address_fields', '__return_false');
                         add_filter('pmpro_required_billing_fields', array('PMProGateway_Paystack', 'pmpro_required_billing_fields'));
-                        add_filter('pmpro_include_payment_information_fields', '__return_false', 20);
+                        add_filter('pmpro_include_payment_information_fields', '__return_false', 20 );
                         add_filter('pmpro_checkout_before_change_membership_level', array('PMProGateway_Paystack', 'pmpro_checkout_before_change_membership_level'), 10, 2);
 
                         add_filter('pmpro_gateways_with_pending_status', array('PMProGateway_Paystack', 'pmpro_gateways_with_pending_status'));
@@ -129,7 +129,7 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                     ?>
                     <span id="pmpro_submit_span">
                     <input type="hidden" name="submit-checkout" value="1" />
-                    <input type="submit" class="pmpro_btn pmpro_btn-submit-checkout" value="<?php if ($pmpro_requirebilling) { esc_html_e('Check Out with Paystack', 'paystack-gateway-paid-memberships-pro'); } else { esc_html_e('Submit and Confirm', 'paystack-gateway-paid-memberships-pro');}?> &raquo;" />
+                    <input type="submit" class="<?php echo esc_attr( pmpro_get_element_class( 'pmpro_btn pmpro_btn-submit-checkout' ) ); ?>" value="<?php if ($pmpro_requirebilling) { esc_html_e('Check Out with Paystack', 'paystack-gateway-paid-memberships-pro'); } else { esc_html_e('Submit and Confirm', 'paystack-gateway-paid-memberships-pro');}?>" />
                     </span>
                     <?php
 
