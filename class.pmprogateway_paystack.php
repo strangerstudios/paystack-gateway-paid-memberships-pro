@@ -3,7 +3,7 @@
  * Plugin Name: Paystack Gateway for Paid Memberships Pro
  * Plugin URI: https://www.paidmembershipspro.com/add-ons/paystack-gateway/
  * Description: Plugin to add Paystack payment gateway into Paid Memberships Pro
- * Version: 1.7.6
+ * Version: 1.7.7
  * Author: Paid Memberships Pro, Paystack
  * Author URI: https://www.paidmembershipspro.com
  * License: GPLv2 or later
@@ -129,7 +129,7 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                     ?>
                     <span id="pmpro_submit_span">
                     <input type="hidden" name="submit-checkout" value="1" />
-                    <input type="submit" class="<?php echo esc_attr( pmpro_get_element_class( 'pmpro_btn pmpro_btn-submit-checkout' ) ); ?>" value="<?php if ($pmpro_requirebilling) { esc_html_e('Check Out with Paystack', 'paystack-gateway-paid-memberships-pro'); } else { esc_html_e('Submit and Confirm', 'paystack-gateway-paid-memberships-pro');}?>" />
+                    <input type="submit" class="<?php echo esc_attr( pmpro_get_element_class( 'pmpro_btn pmpro_btn-submit-checkout', 'pmpro_btn-submit-checkout' ) ); ?>" value="<?php if ( $pmpro_requirebilling ) { esc_html_e( 'Check Out with Paystack', 'paystack-gateway-paid-memberships-pro' ); } else { esc_html_e( 'Submit and Confirm', 'paystack-gateway-paid-memberships-pro' ); }?>" />
                     </span>
                     <?php
 
