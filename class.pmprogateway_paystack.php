@@ -865,6 +865,11 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                                         }
                                         
                                         $subscription_delay = get_option( 'pmpro_subscription_delay_' . $pmpro_level->id, 0 );
+
+                                        $body = array(
+                                            'customer'  => $customer_code,
+                                            'plan'      => $plancode
+                                        );
                                         
                                         if ( $subscription_delay ) {
                                                 if ( ! is_numeric( $subscription_delay ) ) {
@@ -873,14 +878,16 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                                                 $start_date = date( 'Y-m-d', strtotime( '+ ' . intval( $subscription_delay ) . ' Days', current_time( 'timestamp' ) ) );
                                             }
                                         } else {
-                                            $start_date = current_time( 'mysql' );
+                                            // $start_date = current_time( 'mysql' );
+                                            $start_date = NULL;
+                                        }
+
+                                        // If we are tweaking the start date via Subscription Delays Add On, let's set that to the subscription.
+                                        if ( ! empty( $start_date ) ) {
+                                            $body['start_date'] = apply_filters( 'pmpro_paystack_subscription_start_date', $start_date );
                                         }
                                         
-                                        $body = array(
-                                            'customer'  => $customer_code,
-                                            'plan'      => $plancode,
-                                            'start_date' => $start_date
-                                        );
+                                        
                                         $args = array(
                                             'body'      => json_encode($body),
                                             'headers'   => $headers,
