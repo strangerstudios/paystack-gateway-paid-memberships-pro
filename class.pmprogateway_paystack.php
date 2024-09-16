@@ -364,23 +364,21 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
 			        return $supports[$feature];
 		        }
                 
-                /**
-                 * Get a list of payment options that the Paystack gateway needs/supports.
-                 */
-                static function getGatewayOptions()
-                {
-                    $options = array (
-                        'paystack_tsk',
-                        'paystack_tpk',
-                        'paystack_lsk',
-                        'paystack_lpk',
-                        'currency',
-                        'tax_state',
-                        'tax_rate'
-                        );
-
-                    return $options;
-                }
+				/**
+				 * Get a list of payment options that the Paystack gateway needs/supports.
+				 */
+				static function getGatewayOptions() {
+					//call super
+					$options = parent::getGatewayOptions();
+					//combine above with options below
+					$options = array_merge( $options, array(
+						'paystack_tsk',
+						'paystack_tpk',
+						'paystack_lsk',
+						'paystack_lpk',
+					) );
+					return $options;
+				}
 
                 /**
                  * Set payment options for payment settings page.
