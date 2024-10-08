@@ -493,6 +493,10 @@ if (!function_exists('Paystack_Pmp_Gateway_load')) {
                         return;
                     }
 
+                    if ( $morder->gateway != "paystack" ) {
+                        return;
+                    }
+
                     if ( empty( $morder->code ) ) {
                         $morder->code = $morder->getRandomCode();
                     }
