@@ -376,6 +376,70 @@ class PMProGateway_paystack extends PMProGateway {
         }
     }
 
+    function cancel(&$order, $update_status = true )
+    {
+        $backtrace = self::get_caller_info();
+        $furtherbacktrace = wp_debug_backtrace_summary();
+      
+        //no matter what happens below, we're going to cancel the order in our system
+        if ( $update_status ) {
+            $order->updateStatus( "cancelled" );
+        }
+
+        $mode = pmpro_getOption("gateway_environment");
+        $code = $order->subscription_transaction_id;
+        if ($mode == 'sandbox') {
+            $key = pmpro_getOption("paystack_tsk");
+        } else {
+            $key = pmpro_getOption("paystack_lsk");
+
+        }
+
+        if ( $code != "") {
+            $paystack_url = 'https://api.paystack.co/subscription/' . $code;
+           
+            $headers = array(
+                'Authorization' => 'Bearer ' . $key
+            );
+            $args = array(
+                'headers' => $headers,
+                'timeout' => 60,
+            );
+            
+            $request = wp_remote_get($paystack_url, $args);
+            if (!is_wp_error($request) && 200 == wp_remote_retrieve_response_code($request)) {
+                $paystack_response = json_decode(wp_remote_retrieve_body($request));
+                if ('active' == $paystack_response->data->status && $code == $paystack_response->data->subscription_code && '1' == $paystack_response->status) {
+
+                    $paystack_url = 'https://api.paystack.co/subscription/disable';
+                    $headers = array(
+                        'Content-Type'  => 'application/json',
+                        'Authorization' => "Bearer ".$key
+                    );
+                    $body = array(
+                        'code'  => $paystack_response->data->subscription_code,
+                        'token' => $paystack_response->data->email_token,
+                        'debug_trace'=> $backtrace . " ". $furtherbacktrace
+                    );
+                    $args = array(
+                        'body'      => json_encode($body),
+                        'headers'   => $headers,
+                        'timeout'   => 60,
+                    );
+
+                    $request = wp_remote_post($paystack_url, $args);
+
+                    if ( ! is_wp_error( $request ) ) {
+                        return true;
+                    } else {
+                        return false; // There was an error cancelling for some reason.
+                    }
+                }
+            }
+        }
+        return true;
+    }
+    
     /**
      * Allow refunds from within Paid Memberships Pro and Paystack.
      * @since TBD
