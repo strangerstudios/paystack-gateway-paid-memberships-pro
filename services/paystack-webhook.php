@@ -41,7 +41,7 @@ case 'subscription.disable':
     pmpro_handle_subscription_cancellation_at_gateway( $post_event->data->subscription_code, 'paystack', $gateway_environment );
     pmpro_paystack_webhook_exit();
     break;
-case 'charge.success': // This can change too.
+case 'charge.success': // This runs for both recurring and initial checkouts.
     $morder =  new MemberOrder($post_event->data->reference);
     $morder->getMembershipLevel();
     $morder->getUser();
@@ -52,7 +52,7 @@ case 'charge.success': // This can change too.
     pmpro_paystack_webhook_log( 'Charge success. Reference: ' . $post_event->data->reference );
     break;
 case 'invoice.create':
-    pmpro_paystack_renew_payment( $post_event ); // Create the order as this webhook is sent first.
+    pmpro_paystack_renew_payment( $post_event );
     break;
 case 'invoice.update': /// Don't think we need this always.
     pmpro_paystack_renew_payment($post_event); 
@@ -86,6 +86,11 @@ function pmpro_paystack_complete_order( $reference, &$order ) {
         return false;
     }
 
+    // Order is not in token status, so we can just bail - no need to update anything.
+    if ( $order->status != 'token' ) {
+        return false;
+    }
+
     // Reference is for another order
     if ( $order->code != $reference ) {
         return false;
@@ -106,7 +111,7 @@ function pmpro_paystack_complete_order( $reference, &$order ) {
 	
 }
 
-// Confirm the subscription
+// Confirm the subscription via plan etc.
 function pmpro_paystack_confirm_subscription( $post_event, $order ) {
     global $wpdb, $current_user, $pmpro_invoice, $pmpro_currency,$gateway;
 
@@ -322,119 +327,63 @@ function pmpro_paystack_confirm_subscription( $post_event, $order ) {
     }
 }
 
-// First stab at renewal payments. This is for recurring subs yo! ///
+/**
+ * Handle the successful recurring payments.
+ *
+ * @param object $post_event The Paystack event object data.
+ * @return void
+ */
 function pmpro_paystack_renew_payment( $post_event ) {
-    global $wp,$wpdb;
-    
-    /// This is just for now.
-    $event = $post_event;
-
-    if (isset($event->data->paid) && ($event->data->paid == 1)) {
-
-        $amount = $event->data->subscription->amount/100;
-        $subscription_code = $event->data->subscription->subscription_code;
-        $email = $event->data->customer->email;
+    if ( isset( $post_event->data->paid ) && ( $post_event->data->paid == 1 ) ) {
+        $amount = $post_event->data->subscription->amount/100;
+        $subscription_code = $post_event->data->subscription->subscription_code;
+        $email = $post_event->data->customer->email;
         $old_order = new MemberOrder();
-        $old_order->getLastMemberOrderBySubscriptionTransactionID($subscription_code);
+        $old_order->getLastMemberOrderBySubscriptionTransactionID( $subscription_code );
        
-        if (empty($old_order)) {
+        if ( empty( $old_order ) || empty( $old_order->id ) ) {
             pmpro_paystack_webhook_log( 'Could not find last order for subscription code: ' . $subscription_code );
             pmpro_paystack_webhook_exit();
         }
 
         $user_id = $old_order->user_id;
-        $user = get_userdata($user_id);
+        $user = get_userdata( $user_id );
 
         if ( empty( $user ) ) {
             pmpro_paystack_webhook_log( 'Could not get user for renewal payment' );
             pmpro_paystack_webhook_exit();
         }
 
+        // Let's create the order.
         $morder = new MemberOrder();
-        
-        // Set the orders date to time it was paid.
-        if ( ! empty( $event->data->paid_at ) ) {
-            $morder->timestamp = strtotime( sanitize_text_field( $event->data->paid_at ) );
-        }
-
         $morder->user_id = $old_order->user_id;
         $morder->membership_id = $old_order->membership_id;
-        $morder->subtotal = $amount;  //not the initial payment, but the order class is expecting this
+        $morder->subtotal = $amount;
         $morder->total = $amount;
-        $morder->payment_transaction_id = ! empty( $event->data->invoice_code ) ? $event->data->invoice_code : $event->transaction->reference; /// invoice_code is only available in invoice.create and not charge.success (so change the reference)
+        $morder->payment_transaction_id = ! empty( $post_event->data->invoice_code ) ? $post_event->data->invoice_code : '';
         $morder->subscription_transaction_id = $subscription_code;
-
+         // Set the orders date to time it was paid.
+         if ( ! empty( $post_event->data->paid_at ) ) {
+            $morder->timestamp = strtotime( sanitize_text_field( $post_event->data->paid_at ) );
+        }
         $morder->gateway = $old_order->gateway;
         $morder->gateway_environment = $old_order->gateway_environment;
-
-        $morder->Email = $email;
-        $pmpro_level = $wpdb->get_row("SELECT * FROM $wpdb->pmpro_membership_levels WHERE id = '" . (int)$morder->membership_id . "' LIMIT 1");
-        $startdate = apply_filters( 'pmpro_checkout_start_date', "'" . current_time( 'mysql' ) . "'", $morder->user_id, $morder->membership_level );
-
-        // get discount code     (NOTE: but discount_code isn't set here. How to handle discount codes for PayPal Standard?)
-        $morder->getDiscountCode();
-        if ( ! empty( $morder->discount_code ) ) {
-            // update membership level
-            $morder->getMembershipLevel( true );
-            $discount_code_id = $morder->discount_code->id;
-        } else {
-            $discount_code_id = '';
-        }
-
-        //fix expiration date
-        if ( ! empty( $morder->membership_level->expiration_number ) ) {
-            $enddate = "'" . date_i18n( "Y-m-d", strtotime( "+ " . $morder->membership_level->expiration_number . " " . $morder->membership_level->expiration_period, current_time( "timestamp" ) ) ) . "'";
-        } else {
-            $enddate = "NULL";
-        }
-        
-        $custom_level = array(
-            'user_id'           => $morder->user_id,
-            'membership_id'     => $morder->memberhsip_level->id,
-            'code_id'           => $discount_code_id,
-            'initial_payment'   => $morder->memberhsip_level->initial_payment,
-            'billing_amount'    => $morder->memberhsip_level->billing_amount,
-            'cycle_number'      => $morder->memberhsip_level->cycle_number,
-            'cycle_period'      => $morder->memberhsip_level->cycle_period,
-            'billing_limit'     => $morder->memberhsip_level->billing_limit,
-            'trial_amount'      => $morder->memberhsip_level->trial_amount,
-            'trial_limit'       => $morder->memberhsip_level->trial_limit,
-            'startdate'         => $startdate,
-            'enddate'           => $enddate
-        );
-
-        //get CC info that is on file
-        $morder->expirationmonth = get_user_meta($user_id, "pmpro_ExpirationMonth", true);
-        $morder->expirationyear = get_user_meta($user_id, "pmpro_ExpirationYear", true);
-        $morder->ExpirationDate = $morder->expirationmonth . $morder->expirationyear;
-        $morder->ExpirationDate_YdashM = $morder->expirationyear . "-" . $morder->expirationmonth;
-
 
         // Save entire order data to IPN Log - loop through the order object.
         $order_data = array();
         foreach ( $morder as $key => $value ) {
             $order_data[ $key ] = $value;
         }
+
         pmpro_paystack_webhook_log( 'Order data: ' . print_r( $order_data, true ) );
-        
-        
-        //save
-        if ($morder->status != 'success') {
 
-            $_REQUEST['cancel_membership'] = false; // Do NOT cancel gateway subscription
-
-            if ( pmpro_changeMembershipLevel( $custom_level, $morder->user_id, 'changed' ) !== false  ) {
-                $morder->status = "success";
-            }
-
-        }
-
-        // Save the order before emailing the customer about it.
+        $morder->status = 'success';
         $morder->saveOrder();
+        $morder->getMemberOrderByID($morder->id);
 
         //email the user their invoice
         $pmproemail = new PMProEmail();
-        $pmproemail->sendInvoiceEmail($user, $morder);
+        $pmproemail->sendInvoiceEmail( $user, $morder );
 
         do_action('pmpro_subscription_payment_completed', $morder);
         pmpro_paystack_webhook_log( sprintf( 'Subscription payment completed for user with ID: %d. Order ID: %s', $user_id, $morder->code ) );
