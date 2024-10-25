@@ -46,7 +46,7 @@ case 'charge.success': // This runs for both recurring and initial checkouts.
     $morder->getMembershipLevel();
     $morder->getUser();
     pmpro_paystack_complete_order( $post_event->data->reference, $morder );
-    pmpro_paystack_confirm_subscription( $post_event->data->reference, $morder ); // This will be for recurring subscriptions/levels.
+    pmpro_paystack_confirm_subscription( $post_event, $morder ); // This will be for recurring subscriptions/levels.
     $pstk_logger = new pmpro_paystack_plugin_tracker( 'pm-pro', $public_key );
     $pstk_logger->log_transaction_success( $post_event->data->reference );
     pmpro_paystack_webhook_log( 'Charge success. Reference: ' . $post_event->data->reference );
@@ -118,11 +118,6 @@ function pmpro_paystack_confirm_subscription( $post_event, $order ) {
         if (!empty($morder) && $morder->gateway == "paystack") {
             $pmpro_invoice = $morder;
         }
-    }
-
-    // Order is already confirmed, no need.
-    if ( $morder->status == 'success' ) {
-        return;
     }
 
     // No user found lets bail then.
