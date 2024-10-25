@@ -101,10 +101,6 @@ function pmpro_paystack_complete_order( $reference, &$order ) {
 	$order->payment_transaction_id = $reference;
 	$order->saveOrder(); // Temporarily save the order before processing it.
 
-    if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
-        return false;
-    }
-
 	// Change level and complete the order.
 	pmpro_pull_checkout_data_from_order( $order );
 	return pmpro_complete_async_checkout( $order );
