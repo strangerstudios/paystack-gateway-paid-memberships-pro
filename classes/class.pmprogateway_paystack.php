@@ -42,6 +42,7 @@ class PMProGateway_paystack extends PMProGateway {
             add_filter( 'pmpro_include_billing_address_fields', '__return_false' );
 			add_filter( 'pmpro_include_payment_information_fields', '__return_false' );
 			add_filter( 'pmpro_billing_show_payment_method', '__return_false' );
+            add_filter('pmpro_required_billing_fields', array( 'PMProGateway_Paystack', 'pmpro_required_billing_fields' ) );
 
             // Refund functionality.
             add_filter( 'pmpro_allowed_refunds_gateways', array( 'PMProGateway_Paystack', 'pmpro_allowed_refunds_gateways' ) );
