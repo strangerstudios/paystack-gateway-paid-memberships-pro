@@ -4,7 +4,7 @@ Donate link: https://paystack.com/demo
 Tags: paid memberships pro, paystack, gateway, credit card, Naira
 Requires at least: 5.2
 Tested up to: 6.6
-Stable tag: 1.7.8
+Stable tag: 1.8
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -73,6 +73,9 @@ Yes you can! Join in on our [GitHub repository](https://github.com/strangerstudi
 1. The slick Paystack settings panel.
 
 == Changelog ==
+= 1.8 - 2024-11-06 =
+* FEATURE: Now updating the plugin from paidmembershipspro.com
+
 = 1.7.8 - 2024-10-09 =
 * BUG FIX: Fixed an issue where free checkouts would cause a fatal error.
 
