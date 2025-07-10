@@ -25,7 +25,7 @@ class PMProGateway_paystack extends PMProGateway {
 
         // Add fields to payment settings.
         add_filter( 'pmpro_payment_options', array( 'PMProGateway_Paystack', 'pmpro_payment_options' ) );
-        add_filter( 'pmpro_payment_option_fields', array( 'PMProGateway_Paystack', 'pmpro_payment_option_fields' ), 10, 2 );
+		add_filter( 'pmpro_payment_option_fields', array( 'PMProGateway_Paystack', 'pmpro_payment_option_fields' ), 10, 2 ); 
         add_action( 'wp_ajax_pmpro_paystack_ipn', array( 'PMProGateway_Paystack', 'pmpro_paystack_ipn' ) );
         add_action( 'wp_ajax_nopriv_pmpro_paystack_ipn', array( 'PMProGateway_Paystack', 'pmpro_paystack_ipn' ) );
 
@@ -42,7 +42,7 @@ class PMProGateway_paystack extends PMProGateway {
             add_filter( 'pmpro_include_billing_address_fields', '__return_false' );
 			add_filter( 'pmpro_include_payment_information_fields', '__return_false' );
 			add_filter( 'pmpro_billing_show_payment_method', '__return_false' );
-            add_filter('pmpro_required_billing_fields', array( 'PMProGateway_Paystack', 'pmpro_required_billing_fields' ) );
+            add_filter( 'pmpro_required_billing_fields', array( 'PMProGateway_Paystack', 'pmpro_required_billing_fields' ) );
 
             // Refund functionality.
             add_filter( 'pmpro_allowed_refunds_gateways', array( 'PMProGateway_Paystack', 'pmpro_allowed_refunds_gateways' ) );
@@ -118,6 +118,7 @@ class PMProGateway_paystack extends PMProGateway {
 
     /**
      * Set payment options for payment settings page.
+	 * This has been deprecated due to Paid Memberships Pro V3.5+.
      */
     static function pmpro_payment_options( $options ) {
         //get Paystack options
@@ -131,6 +132,8 @@ class PMProGateway_paystack extends PMProGateway {
 
     /**
      * Display fields for Paystack options.
+	 * This function is deprecated and only used for versions before PMPro 3.5
+	 * See the new callback `show_settings_fields` in the `PMProGateway_Paystack` class.
      */
     static function pmpro_payment_option_fields( $values, $gateway ) {
         ?>
@@ -177,6 +180,111 @@ class PMProGateway_paystack extends PMProGateway {
         </tr>
         <?php
     }
+
+	/**
+	 * Show settings fields for Paystack gateway.
+	 * 
+	 * @since TBD
+	 *
+	 */
+	static function show_settings_fields() {
+		?>
+		<p>
+				<?php
+					printf(
+						/* translators: %s: URL to the Paystack gateway documentation. */
+						esc_html__( 'For detailed setup instructions, please visit our %s.', 'paystack-gateway-paid-memberships-pro' ),
+						'<a href="https://www.paidmembershipspro.com/add-ons/paystack-gateway/#h-setup?utm_source=plugin&utm_medium=pmpro-paymentsettings&utm_campaign=documentation&utm_content=paystack-documentation" target="_blank">' . esc_html__( 'Paystack documentation', 'paystack-gateway-paid-memberships-pro' ) . '</a>'
+					);
+				?>
+			</p>
+			<div id="pmpro_paystack" class="pmpro_section" data-visibility="shown" data-activated="true">
+				<div class="pmpro_section_toggle">
+					<button class="pmpro_section-toggle-button" type="button" aria-expanded="true">
+						<span class="dashicons dashicons-arrow-up-alt2"></span>
+						<?php esc_html_e( 'Settings', 'paystack-gateway-paid-memberships-pro' ); ?>
+					</button>
+				</div>
+				<div class="pmpro_section_inside">
+					<table class="form-table">
+						<tbody>
+							<tr class="gateway gateway_paystack">
+								<th scope="row" valign="top">
+									<label for="paystack_tsk"><?php esc_html_e('Test Secret Key', 'paystack-gateway-paid-memberships-pro');?>:</label>
+								</th>
+								<td>
+									<input type="text" id="paystack_tsk" name="paystack_tsk" size="60" value="<?php echo esc_attr( get_option('pmpro_paystack_tsk') ); ?>" />
+								</td>
+							</tr>
+							<tr class="gateway gateway_paystack">
+								<th scope="row" valign="top">
+									<label for="paystack_tpk"><?php esc_html_e('Test Public Key', 'paystack-gateway-paid-memberships-pro');?>:</label>
+								</th>
+								<td>
+									<input type="text" id="paystack_tpk" name="paystack_tpk" size="60" value="<?php echo esc_attr(get_option( 'pmpro_paystack_tpk' ) ); ?>" />
+								</td>
+							</tr>
+							<tr class="gateway gateway_paystack">
+								<th scope="row" valign="top">
+									<label for="paystack_lsk"><?php esc_html_e('Live Secret Key', 'paystack-gateway-paid-memberships-pro');?>:</label>
+								</th>
+								<td>
+									<input type="text" id="paystack_lsk" name="paystack_lsk" size="60" value="<?php echo esc_attr(get_option( 'pmpro_paystack_lsk' ) ); ?>" />
+								</td>
+							</tr>
+							<tr class="gateway gateway_paystack">
+								<th scope="row" valign="top">
+									<label for="paystack_lpk"><?php esc_html_e('Live Public Key', 'paystack-gateway-paid-memberships-pro');?>:</label>
+								</th>
+								<td>
+									<input type="text" id="paystack_lpk" name="paystack_lpk" size="60" value="<?php echo esc_attr(get_option( 'pmpro_paystack_lpk' ) ); ?>" />
+								</td>
+							</tr>
+							<tr class="gateway gateway_paystack">
+								<th scope="row" valign="top">
+									<label><?php esc_html_e('Webhook', 'paystack-gateway-paid-memberships-pro');?>:</label>
+								</th>
+								<td>
+									<p><?php esc_html_e( 'To fully integrate with Paystack, be sure to use the following for your Webhook URL to', 'paystack-gateway-paid-memberships-pro' );?><br/><code><?php echo admin_url("admin-ajax.php") . "?action=pmpro_paystack_ipn";?></code></p>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		<?php
+	}
+
+	/**
+	 * Get a description for this gateway.
+	 *
+	 * @since TBD
+	 *
+	 * @return string
+	 */
+	public static function get_description_for_gateway_settings() {
+		return esc_html__( 'With Paystack, members can pay using credit or debit cards, bank transfers, USSD, mobile money, QR codes, Apple Pay and more. Paystack is accepted worldwide and offers multi-currency support across numerous African countries.', 'paystack-gateway-paid-memberships-pro' );
+	}
+
+	/**
+	 * Save settings fields for Paystack the gateway.
+	 * 
+	 * @since TBD
+	 */
+	public static function save_settings_fields() {
+			$settings_to_save = array(
+				'paystack_tsk',
+				'paystack_tpk',
+				'paystack_lsk',
+				'paystack_lpk',
+			);
+
+			foreach ( $settings_to_save as $setting ) {
+				if ( isset( $_REQUEST[ $setting ] ) ) {
+					update_option( 'pmpro_' . $setting, sanitize_text_field( $_REQUEST[ $setting ] ) );
+				}
+			}
+		}
 
     /**
      * Remove required billing fields from checkout.
@@ -497,7 +605,7 @@ class PMProGateway_paystack extends PMProGateway {
 
                 // If not successful throw an error.
                 if ( ! $response->status ) {
-                    $order->notes = trim( $order->notes.' '.sprintf( __('Admin: Order refund failed on %1$s for transaction ID %2$s by %3$s. Order may have already been refunded.', 'paid-memberships-pro' ), date_i18n('Y-m-d H:i:s'), $transaction_id, $current_user->display_name ) );
+                    $order->notes = trim( $order->notes.' '.sprintf( __('Admin: Order refund failed on %1$s for transaction ID %2$s by %3$s. Order may have already been refunded.', 'paystack-gateway-paid-memberships-pro' ), date_i18n('Y-m-d H:i:s'), $transaction_id, $current_user->display_name ) );
                     $order->saveOrder();
                 } else {
                 // Set the order status to refunded and save it and return true
@@ -505,7 +613,7 @@ class PMProGateway_paystack extends PMProGateway {
                 
                 $success = true;
 
-                $order->notes = trim( $order->notes.' '.sprintf( __('Admin: Order successfully refunded on %1$s for transaction ID %2$s by %3$s.', 'paid-memberships-pro' ), date_i18n('Y-m-d H:i:s'), $transaction_id, $current_user->display_name ) );	
+                $order->notes = trim( $order->notes.' '.sprintf( __('Admin: Order successfully refunded on %1$s for transaction ID %2$s by %3$s.', 'paystack-gateway-paid-memberships-pro' ), date_i18n('Y-m-d H:i:s'), $transaction_id, $current_user->display_name ) );	
 
                 $user = get_user_by( 'id', $order->user_id );
                 //send an email to the member

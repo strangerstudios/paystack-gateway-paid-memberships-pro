@@ -209,7 +209,7 @@ function pmpro_paystack_confirm_subscription( $post_event, $order ) {
                             } else {
                                 //Create Plan
                                 $body = array(
-                                    'name'      => '('.number_format($amount).') - '.$interval.' - ['.$pmpro_level->cycle_number.' - '.$pmpro_level->cycle_period.']' ,
+                                    'name'      => apply_filters( 'pmpro_paystack_plan_description', substr( trim( $pmpro_level->name ) . " at " . trim( get_bloginfo( "name" ) ), 0, 127 ), $pmpro_level ),
                                     'amount'    => $koboamount,
                                     'interval'  => $interval
                                 );
