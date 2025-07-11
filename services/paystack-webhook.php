@@ -127,7 +127,7 @@ function pmpro_paystack_confirm_subscription( $post_event, $order ) {
             // TODO: Use pmpro_getLevel instead of a DB query.
             $pmpro_level = $wpdb->get_row("SELECT * FROM $wpdb->pmpro_membership_levels WHERE id = '" . (int)$morder->membership_id . "' LIMIT 1");
 			
-			// TODO: Move to pmpro_calculate_start_date.
+			// TODO: Move to pmpro_calculate_profile_start_date.
             $startdate = apply_filters("pmpro_checkout_start_date", "'" . current_time("mysql") . "'", $morder->user_id, $pmpro_level);
 
             // The level object from the order that can be filtered when returning from Paystack and user is getting their membership level.
