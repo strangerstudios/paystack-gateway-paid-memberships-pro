@@ -1,8 +1,7 @@
 <?php
-// Paystack webhook code goes here. /// Change this.
+// Paystack webhook handler for Paid Memberships Pro.
 
-/// define
-define( 'PMPRO_PAYSTACK_WEBHOOK_DEBUG', 'log' );
+// define( 'PMPRO_PAYSTACK_WEBHOOK_DEBUG', 'log' );
 
 // Let's make sure the request came from Paystack by checking the secret key
 if ( ( strtoupper( $_SERVER['REQUEST_METHOD'] ) != 'POST' ) || ! array_key_exists( 'HTTP_X_PAYSTACK_SIGNATURE', $_SERVER ) ) {
@@ -54,7 +53,7 @@ case 'charge.success': // This runs for both recurring and initial checkouts.
 case 'invoice.create':
     pmpro_paystack_renew_payment( $post_event );
     break;
-case 'invoice.update': /// Don't think we need this always.
+case 'invoice.update':
     pmpro_paystack_renew_payment($post_event); 
     break;
 }
@@ -125,17 +124,17 @@ function pmpro_paystack_confirm_subscription( $post_event, $order ) {
             $morder = $pmpro_invoice;
         if ($morder->code == $webhook_reference_id ) {
 
-            /// Use pmpro_getLevel instead of a DB query.
+            // TODO: Use pmpro_getLevel instead of a DB query.
             $pmpro_level = $wpdb->get_row("SELECT * FROM $wpdb->pmpro_membership_levels WHERE id = '" . (int)$morder->membership_id . "' LIMIT 1");
-            
-            /// Don't need filters.
+			
+			// TODO: Move to pmpro_calculate_start_date.
             $startdate = apply_filters("pmpro_checkout_start_date", "'" . current_time("mysql") . "'", $morder->user_id, $pmpro_level);
 
             // The level object from the order that can be filtered when returning from Paystack and user is getting their membership level.
-            /// Deprecate this.
+            // TODO: Deprecate this.
             $morder->membership_level = apply_filters( 'pmpro_paystack_webhook_level', $morder->membership_level, $morder->user_id );
 
-            /// Fix this mode?
+            // Get the mode of the environment so we know which keys to use.
             $mode = pmpro_getOption("gateway_environment");
             if ($mode == "sandbox") {
                 $key = pmpro_getOption("paystack_tsk");
