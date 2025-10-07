@@ -9,47 +9,49 @@ add_action( 'init', array( 'PMProGateway_paystack', 'init' ) );
 
 class PMProGateway_paystack extends PMProGateway {
 
-    function __construct( $gateway = NULL ) {
-        $this->gateway = $gateway;
-        return $this->gateway;
-    }
+	function __construct( $gateway = NULL ) {
+		$this->gateway = $gateway;
+		return $this->gateway;
+	}
 
-    /**
-     * Run on WP init.
-     * This method will run all the necessary gateway hooks that are needed.
-     */
-    public static function init() {
+	/**
+	 * Run on WP init.
+	 * This method will run all the necessary gateway hooks that are needed.
+	 */
+	public static function init() {
 
-        // Make sure Paystack is a gateway option.
-        add_filter( 'pmpro_gateways', array( 'PMProGateway_paystack', 'pmpro_gateways' ) );
+		// Make sure Paystack is a gateway option.
+		add_filter( 'pmpro_gateways', array( 'PMProGateway_paystack', 'pmpro_gateways' ) );
 
-        // Add fields to payment settings.
-        add_filter( 'pmpro_payment_options', array( 'PMProGateway_Paystack', 'pmpro_payment_options' ) );
+		// Add fields to payment settings.
+		add_filter( 'pmpro_payment_options', array( 'PMProGateway_Paystack', 'pmpro_payment_options' ) );
 		add_filter( 'pmpro_payment_option_fields', array( 'PMProGateway_Paystack', 'pmpro_payment_option_fields' ), 10, 2 ); 
-        add_action( 'wp_ajax_pmpro_paystack_ipn', array( 'PMProGateway_Paystack', 'pmpro_paystack_ipn' ) );
-        add_action( 'wp_ajax_nopriv_pmpro_paystack_ipn', array( 'PMProGateway_Paystack', 'pmpro_paystack_ipn' ) );
+		add_action( 'wp_ajax_pmpro_paystack_ipn', array( 'PMProGateway_Paystack', 'pmpro_paystack_ipn' ) );
+		add_action( 'wp_ajax_nopriv_pmpro_paystack_ipn', array( 'PMProGateway_Paystack', 'pmpro_paystack_ipn' ) );
 
-        // Keeping the deprecated action for backwards compatibility.
-        add_action( 'wp_ajax_kkd_pmpro_paystack_ipn', array( 'PMProGateway_Paystack', 'kkd_pmpro_paystack_ipn' ) );
-        add_action( 'wp_ajax_nopriv_kkd_pmpro_paystack_ipn', array( 'PMProGateway_Paystack', 'kkd_pmpro_paystack_ipn' ) );
+		// Keeping the deprecated action for backwards compatibility.
+		add_action( 'wp_ajax_kkd_pmpro_paystack_ipn', array( 'PMProGateway_Paystack', 'kkd_pmpro_paystack_ipn' ) );
+		add_action( 'wp_ajax_nopriv_kkd_pmpro_paystack_ipn', array( 'PMProGateway_Paystack', 'kkd_pmpro_paystack_ipn' ) );
 
-        // Adjust the confirmation message when waiting for Paystack to process the payment.
-        add_filter( 'pmpro_confirmation_payment_incomplete_message', array( 'PMProGateway_Paystack', 'pmpro_confirmation_incomplete_message' ), 10, 2 );
+		// Adjust the confirmation message when waiting for Paystack to process the payment.
+		add_filter( 'pmpro_confirmation_payment_incomplete_message', array( 'PMProGateway_Paystack', 'pmpro_confirmation_incomplete_message' ), 10, 2 );
 
-        //code to add at checkout
-        $gateway = pmpro_getGateway();
-        if ( $gateway == 'paystack' ) {
-            add_filter( 'pmpro_include_billing_address_fields', '__return_false' );
+		$gateway = pmpro_getGateway();
+		if ( $gateway == 'paystack' ) {
+			global $pmpro_gateway_ready;
+			$pmpro_gateway_ready = true;
+
+			add_filter( 'pmpro_include_billing_address_fields', '__return_false' );
 			add_filter( 'pmpro_include_payment_information_fields', '__return_false' );
 			add_filter( 'pmpro_billing_show_payment_method', '__return_false' );
-            add_filter( 'pmpro_required_billing_fields', array( 'PMProGateway_Paystack', 'pmpro_required_billing_fields' ) );
+			add_filter( 'pmpro_required_billing_fields', array( 'PMProGateway_Paystack', 'pmpro_required_billing_fields' ) );
 
-            // Refund functionality.
-            add_filter( 'pmpro_allowed_refunds_gateways', array( 'PMProGateway_Paystack', 'pmpro_allowed_refunds_gateways' ) );
-            add_filter( 'pmpro_process_refund_paystack', array( 'PMProGateway_Paystack', 'process_refund' ), 10, 2 );
-        }
+			// Refund functionality.
+			add_filter( 'pmpro_allowed_refunds_gateways', array( 'PMProGateway_Paystack', 'pmpro_allowed_refunds_gateways' ) );
+			add_filter( 'pmpro_process_refund_paystack', array( 'PMProGateway_Paystack', 'process_refund' ), 10, 2 );
+		}
 
-    }
+	}
 
     /**
      * Add Paystack to the gateway list for PMPro
