@@ -450,7 +450,7 @@ class PMProGateway_paystack extends PMProGateway {
 
             if ( 200 !== wp_remote_retrieve_response_code( $request ) )  {
                 // Throw an error here from the API
-                return esc_html__( sprintf( 'Paystack error: %s', $response->message ), 'paystack-gateway-paid-memberships-pro' );
+                return sprintf( esc_html__( 'Paystack error: %s', 'paystack-gateway-paid-memberships-pro' ), $response->message );
             }
             
             $update_array = array();
