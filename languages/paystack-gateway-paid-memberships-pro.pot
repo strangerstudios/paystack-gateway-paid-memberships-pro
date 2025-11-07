@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-07-11T13:06:32+00:00\n"
+"POT-Creation-Date: 2025-11-07T06:49:12+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: paystack-gateway-paid-memberships-pro\n"
@@ -39,64 +39,69 @@ msgstr ""
 msgid "https://www.paidmembershipspro.com"
 msgstr ""
 
-#: classes/class.pmprogateway_paystack.php:142
-#: classes/class.pmprogateway_paystack.php:213
+#: classes/class.pmprogateway_paystack.php:144
+#: classes/class.pmprogateway_paystack.php:215
 msgid "Test Secret Key"
 msgstr ""
 
-#: classes/class.pmprogateway_paystack.php:150
-#: classes/class.pmprogateway_paystack.php:221
+#: classes/class.pmprogateway_paystack.php:152
+#: classes/class.pmprogateway_paystack.php:223
 msgid "Test Public Key"
 msgstr ""
 
-#: classes/class.pmprogateway_paystack.php:158
-#: classes/class.pmprogateway_paystack.php:229
+#: classes/class.pmprogateway_paystack.php:160
+#: classes/class.pmprogateway_paystack.php:231
 msgid "Live Secret Key"
 msgstr ""
 
-#: classes/class.pmprogateway_paystack.php:166
-#: classes/class.pmprogateway_paystack.php:237
+#: classes/class.pmprogateway_paystack.php:168
+#: classes/class.pmprogateway_paystack.php:239
 msgid "Live Public Key"
 msgstr ""
 
-#: classes/class.pmprogateway_paystack.php:174
-#: classes/class.pmprogateway_paystack.php:245
+#: classes/class.pmprogateway_paystack.php:176
+#: classes/class.pmprogateway_paystack.php:247
 msgid "Webhook"
 msgstr ""
 
-#: classes/class.pmprogateway_paystack.php:177
-#: classes/class.pmprogateway_paystack.php:248
+#: classes/class.pmprogateway_paystack.php:179
+#: classes/class.pmprogateway_paystack.php:250
 msgid "To fully integrate with Paystack, be sure to use the following for your Webhook URL to"
 msgstr ""
 
 #. translators: %s: URL to the Paystack gateway documentation.
-#: classes/class.pmprogateway_paystack.php:196
+#: classes/class.pmprogateway_paystack.php:198
 #, php-format
 msgid "For detailed setup instructions, please visit our %s."
 msgstr ""
 
-#: classes/class.pmprogateway_paystack.php:197
+#: classes/class.pmprogateway_paystack.php:199
 msgid "Paystack documentation"
 msgstr ""
 
-#: classes/class.pmprogateway_paystack.php:205
+#: classes/class.pmprogateway_paystack.php:207
 msgid "Settings"
 msgstr ""
 
-#: classes/class.pmprogateway_paystack.php:266
+#: classes/class.pmprogateway_paystack.php:268
 msgid "With Paystack, members can pay using credit or debit cards, bank transfers, USSD, mobile money, QR codes, Apple Pay and more. Paystack is accepted worldwide and offers multi-currency support across numerous African countries."
 msgstr ""
 
-#: classes/class.pmprogateway_paystack.php:484
+#: classes/class.pmprogateway_paystack.php:455
+#, php-format
+msgid "Paystack error: %s"
+msgstr ""
+
+#: classes/class.pmprogateway_paystack.php:486
 msgid "There was an error communicating with Paystack. Please confirm your connectivity and API details and try again."
 msgstr ""
 
-#: classes/class.pmprogateway_paystack.php:608
+#: classes/class.pmprogateway_paystack.php:610
 #, php-format
 msgid "Admin: Order refund failed on %1$s for transaction ID %2$s by %3$s. Order may have already been refunded."
 msgstr ""
 
-#: classes/class.pmprogateway_paystack.php:616
+#: classes/class.pmprogateway_paystack.php:618
 #, php-format
 msgid "Admin: Order successfully refunded on %1$s for transaction ID %2$s by %3$s."
 msgstr ""
