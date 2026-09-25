@@ -2,6 +2,11 @@
 /**
  * Paystack Gateway Class for Paid Memberships Pro.
  */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 require_once PMPRO_DIR . '/classes/gateways/class.pmprogateway.php';
 
 //load classes init method
@@ -176,7 +181,7 @@ class PMProGateway_paystack extends PMProGateway {
                 <label><?php esc_html_e('Webhook', 'paystack-gateway-paid-memberships-pro');?>:</label>
             </th>
             <td>
-                <p><?php esc_html_e('To fully integrate with Paystack, be sure to use the following for your Webhook URL to', 'paystack-gateway-paid-memberships-pro');?><br/><code><?php echo admin_url("admin-ajax.php") . "?action=pmpro_paystack_ipn";?></code></p>
+                <p><?php esc_html_e('To fully integrate with Paystack, be sure to use the following for your Webhook URL to', 'paystack-gateway-paid-memberships-pro');?><br/><code><?php echo esc_html( admin_url("admin-ajax.php") . "?action=pmpro_paystack_ipn" );?></code></p>
 
             </td>
         </tr>
@@ -247,7 +252,7 @@ class PMProGateway_paystack extends PMProGateway {
 									<label><?php esc_html_e('Webhook', 'paystack-gateway-paid-memberships-pro');?>:</label>
 								</th>
 								<td>
-									<p><?php esc_html_e( 'To fully integrate with Paystack, be sure to use the following for your Webhook URL to', 'paystack-gateway-paid-memberships-pro' );?><br/><code><?php echo admin_url("admin-ajax.php") . "?action=pmpro_paystack_ipn";?></code></p>
+									<p><?php esc_html_e( 'To fully integrate with Paystack, be sure to use the following for your Webhook URL to', 'paystack-gateway-paid-memberships-pro' );?><br/><code><?php echo esc_html( admin_url("admin-ajax.php") . "?action=pmpro_paystack_ipn" );?></code></p>
 								</td>
 							</tr>
 						</tbody>
@@ -281,11 +286,13 @@ class PMProGateway_paystack extends PMProGateway {
 				'paystack_lpk',
 			);
 
+			// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Called from PMPro's adminpages/paymentsettings.php after the capability check and check_admin_referer( 'savesettings', 'pmpro_paymentsettings_nonce' ).
 			foreach ( $settings_to_save as $setting ) {
 				if ( isset( $_REQUEST[ $setting ] ) ) {
-					update_option( 'pmpro_' . $setting, sanitize_text_field( $_REQUEST[ $setting ] ) );
+					update_option( 'pmpro_' . $setting, sanitize_text_field( wp_unslash( $_REQUEST[ $setting ] ) ) );
 				}
 			}
+			// phpcs:enable WordPress.Security.NonceVerification.Recommended
 		}
 
     /**
@@ -404,14 +411,14 @@ class PMProGateway_paystack extends PMProGateway {
             $paystack_response = json_decode( wp_remote_retrieve_body($request ));
             if ($paystack_response->status){
                 $url = $paystack_response->data->authorization_url;
-                wp_redirect($url);
+                wp_redirect($url); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- Offsite redirect to the Paystack hosted payment page.
                 exit;
             } else {
-                wp_redirect(pmpro_url("checkout", "?level=" . $order->membership_level->id . "&error=" . $paystack_response->message));
+                wp_redirect(pmpro_url("checkout", "?level=" . $order->membership_level->id . "&error=" . $paystack_response->message)); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- pmpro_url() is filterable and may point offsite (e.g. Network Subsite).
                 exit();
             }
         } else {
-            wp_redirect(pmpro_url("checkout", "?level=" . $order->membership_level->id . "&error=Failed"));
+            wp_redirect(pmpro_url("checkout", "?level=" . $order->membership_level->id . "&error=Failed")); // phpcs:ignore WordPress.Security.SafeRedirect.wp_redirect_wp_redirect -- pmpro_url() is filterable and may point offsite (e.g. Network Subsite).
             exit();
         }
         exit;
