@@ -3,8 +3,8 @@ Contributors: paystack, kendysond, steveamaza, lukman008, andrewza, strangerstud
 Donate link: https://paystack.com/demo
 Tags: paid memberships pro, paystack, gateway, credit card, Naira
 Requires at least: 5.2
-Tested up to: 6.8
-Stable tag: 1.9.1
+Tested up to: 7.1
+Stable tag: 1.9.2
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -73,6 +73,11 @@ Yes you can! Join in on our [GitHub repository](https://github.com/strangerstudi
 1. The slick Paystack settings panel.
 
 == Changelog ==
+= 1.9.2 - 2026-09-28 =
+* SECURITY: Improved webhook signature verification and now only complete orders created by the Paystack gateway. #18 (@dparker1005)
+* SECURITY: Added direct file access protection and escaped the webhook URL on the payment settings page. #17 (@dparker1005)
+* BUG FIX: Fixed a fatal error when Paystack sent webhooks to the legacy webhook URL. #19 (@dparker1005)
+
 = 1.9.1 - 2025-11-07 =
 * BUG FIX: Fixed an issue where PMPro would show a warning that the gateway is not configured correctly when Paystack is set as the primary gateway. #14 (@andrewlimaza)
 * BUG FIX: Fixed an issue with error output when syncing a subscription failed in the WordPress admin. #15 (@DAnn2012)

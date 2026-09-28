@@ -191,7 +191,7 @@ class PMProGateway_paystack extends PMProGateway {
 	/**
 	 * Show settings fields for Paystack gateway.
 	 * 
-	 * @since TBD
+	 * @since 1.9
 	 *
 	 */
 	static function show_settings_fields() {
@@ -265,7 +265,7 @@ class PMProGateway_paystack extends PMProGateway {
 	/**
 	 * Get a description for this gateway.
 	 *
-	 * @since TBD
+	 * @since 1.9
 	 *
 	 * @return string
 	 */
@@ -276,7 +276,7 @@ class PMProGateway_paystack extends PMProGateway {
 	/**
 	 * Save settings fields for Paystack the gateway.
 	 * 
-	 * @since TBD
+	 * @since 1.9
 	 */
 	public static function save_settings_fields() {
 			$settings_to_save = array(
@@ -560,7 +560,7 @@ class PMProGateway_paystack extends PMProGateway {
     
     /**
      * Allow refunds from within Paid Memberships Pro and Paystack.
-     * @since TBD
+     * @since 1.7.3
      */
     public static function process_refund( $success, $order ) {
         global $current_user;
@@ -642,7 +642,7 @@ class PMProGateway_paystack extends PMProGateway {
 
     /** 
      * Enable refund functionality for paystack.
-     * @since TBD.
+     * @since 1.7.3
      */
     static function pmpro_allowed_refunds_gateways( $gateways ) {
         $gateways[] = 'paystack';
@@ -651,7 +651,7 @@ class PMProGateway_paystack extends PMProGateway {
 
     /**
      * Change the confirmation message, as Paystack's webhook notification may take a few seconds.
-     * @since TBD
+     * @since 1.9
      */
     public static function pmpro_confirmation_incomplete_message( $message, $pmpro_invoice ) {
         
@@ -775,7 +775,7 @@ class PMProGateway_paystack extends PMProGateway {
  * @param string $s The error/information you want to log to the IPN log.
  * @return string $logstr A formatted message for the logfile.
  * 
- * @since TBD
+ * @since 1.7.5
  */
 function pmpro_paystack_webhook_log( $s ) {
     global $logstr;
@@ -785,7 +785,7 @@ function pmpro_paystack_webhook_log( $s ) {
 /**
  * Write to the log file and exit.
  *
- * @since TBD
+ * @since 1.7.5
  */
 function pmpro_paystack_webhook_exit() {
     global $logstr;
