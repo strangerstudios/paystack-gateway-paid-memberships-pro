@@ -1,16 +1,20 @@
 <?php
 // Paystack webhook handler for Paid Memberships Pro.
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 // define( 'PMPRO_PAYSTACK_WEBHOOK_DEBUG', 'log' );
 
 // Let's make sure the request came from Paystack by checking the secret key
-if ( ( strtoupper( $_SERVER['REQUEST_METHOD'] ) != 'POST' ) || ! array_key_exists( 'HTTP_X_PAYSTACK_SIGNATURE', $_SERVER ) ) {
+if ( ! isset( $_SERVER['REQUEST_METHOD'] ) || ( strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) != 'POST' ) || ! array_key_exists( 'HTTP_X_PAYSTACK_SIGNATURE', $_SERVER ) ) {
     pmpro_paystack_webhook_log( 'Paystack signature not found' );
     pmpro_paystack_webhook_exit();
 }
 
 // Log all the post data.
-pmpro_paystack_webhook_log( 'Request:' . print_r( $_REQUEST, true ) );
+pmpro_paystack_webhook_log( 'Request:' . print_r( $_REQUEST, true ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Webhook request from Paystack; read-only logging; the request is authenticated by the HMAC signature check below.
 
 // Get the relevant secret key based on gateway environment.
 $gateway_environment = get_option( 'pmpro_gateway_environment' );
@@ -136,6 +140,7 @@ function pmpro_paystack_confirm_subscription( $post_event, $order ) {
         if ($morder->code == $webhook_reference_id ) {
 
             // TODO: Use pmpro_getLevel instead of a DB query.
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- PMPro custom table; the only variable is cast with (int).
             $pmpro_level = $wpdb->get_row("SELECT * FROM $wpdb->pmpro_membership_levels WHERE id = '" . (int)$morder->membership_id . "' LIMIT 1");
 			
 			// TODO: Move to pmpro_calculate_profile_start_date.
