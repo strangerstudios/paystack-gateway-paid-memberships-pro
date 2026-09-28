@@ -75,7 +75,7 @@ class PMProGateway_paystack extends PMProGateway {
      * @since 1.0
      */
     static function kkd_pmpro_paystack_ipn() {
-        pmpro_paystack_ipn();
+        self::pmpro_paystack_ipn();
     }
 
     /**
