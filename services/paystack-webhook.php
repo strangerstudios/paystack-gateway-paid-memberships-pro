@@ -23,12 +23,18 @@ if ( $gateway_environment == 'sandbox' ) {
     $public_key = get_option( 'pmpro_paystack_lpk' );
 }
 
+// Without a secret key for this environment, the signature can't be verified, so let's bail.
+if ( empty( $secret_key ) ) {
+    pmpro_paystack_webhook_log( 'Paystack secret key not set for the current gateway environment.' );
+    pmpro_paystack_webhook_exit();
+}
+
 // Get the input from Paystack.
 $body = @file_get_contents( 'php://input' );
 $post_event = json_decode( $body );
 
 // The Paystack signature doesn't match the secret key, let's bail.
-if ( $_SERVER['HTTP_X_PAYSTACK_SIGNATURE'] !== hash_hmac('sha512', $body, $secret_key ) ) {
+if ( ! hash_equals( hash_hmac( 'sha512', $body, $secret_key ), sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_PAYSTACK_SIGNATURE'] ) ) ) ) {
     pmpro_paystack_webhook_log( 'Paystack signature does not match.' );
     pmpro_paystack_webhook_exit();
 }
@@ -82,6 +88,11 @@ function pmpro_paystack_complete_order( $reference, &$order ) {
 
     // If not object let's bail.
     if ( ! is_object( $order ) ) {
+        return false;
+    }
+
+    // Order is not a Paystack order, so we can just bail.
+    if ( $order->gateway != 'paystack' ) {
         return false;
     }
 
